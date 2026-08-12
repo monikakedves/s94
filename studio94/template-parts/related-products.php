@@ -7,7 +7,7 @@ if ( $related ) :
 ?>
 <div class="page-body-container" style="margin-bottom:2rem;">
     <div class="related-products-wrap">
-        <h2>Related products</h2>
+        <h2>Related Products</h2>
         <ul class="custom-related">
             <?php 
             foreach ( $related as $rid ) :
@@ -33,8 +33,10 @@ if ( $related ) :
             ?>
                 <li class="product type-product">
                     <div class="product-img-wrap">
-                        <?php if ( $rp->is_on_sale() ) echo '<span class="onsale">Sale!</span>'; ?>
-                        <img src="<?php echo esc_url( $i_url ); ?>" alt="">
+                        <?php if ( $rp->is_on_sale() ) echo '<span class="onsale">SALE!</span>'; ?>
+                        <a href="<?php echo esc_url( $p_url ); ?>" style="display:block; width:100%; height:100%;">
+                            <img src="<?php echo esc_url( $i_url ); ?>" alt="">
+                        </a>
                         <div class="quick-view-overlay">
                             <button class="quick-view-btn" data-id="<?php echo esc_attr( $rid ); ?>">Quick View</button>
                         </div>
@@ -44,9 +46,11 @@ if ( $related ) :
                             <a href="<?php echo esc_url( $p_url ); ?>">
                                 <h3 class="woocommerce-loop-product__title"><?php echo esc_html( $p_title ); ?></h3>
                             </a>
-                            
+                        </div>
+                        <div class="product-price-row">
+                            <span class="price"><?php echo $p_price; ?></span>
                             <?php 
-                            // Native WooCommerce AJAX Add to Cart Button
+                            // Native WooCommerce AJAX Add to Cart Button (Hardcoded 'Add to Cart' string)
                             echo sprintf(
                                 '<a href="%s" data-quantity="1" class="%s" %s>%s</a>',
                                 esc_url( $rp->add_to_cart_url() ),
@@ -62,11 +66,10 @@ if ( $related ) :
                                     'aria-label'       => $rp->add_to_cart_description(),
                                     'rel'              => 'nofollow',
                                 ) ),
-                                esc_html( $rp->add_to_cart_text() )
+                                esc_html__( 'Add to Cart', 'woocommerce' )
                             );
                             ?>
                         </div>
-                        <span class="price"><?php echo $p_price; ?></span>
                     </div>
 
                     <!-- Hidden Data for JS Modal Injection -->

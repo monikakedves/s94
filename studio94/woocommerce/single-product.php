@@ -49,7 +49,15 @@ while (have_posts()) : the_post();
 					<h1 class="product-title"><?php the_title(); ?></h1>
 					<div class="price-wrap"><?php woocommerce_template_single_price(); ?></div>
 					<div class="short-desc"><?php woocommerce_template_single_excerpt(); ?></div>
-					<div class="cart-actions-wrapper"><?php woocommerce_template_single_add_to_cart(); ?></div>
+					<div class="cart-actions-wrapper">
+    <?php 
+    // Filter button text specifically for the single product page
+    add_filter( 'woocommerce_product_single_add_to_cart_text', function() {
+        return __( 'Add to Cart', 'woocommerce' );
+    } );
+    woocommerce_template_single_add_to_cart(); 
+    ?>
+</div>
 					<div class="product-meta"><?php woocommerce_template_single_meta(); ?></div>
 				</div>
 			</div>

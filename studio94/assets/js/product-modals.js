@@ -6,22 +6,18 @@
         const tabContents = document.querySelectorAll(".tab-content");
         
         if (tabContainer && tabBtns.length > 0) {
-            // Create the slider line and add it to the container
             let slider = document.createElement("div");
             slider.className = "tab-slider";
             tabContainer.appendChild(slider);
             
-            // Function to calculate width and move the line
             function moveSlider(btn) {
                 slider.style.width = btn.offsetWidth + "px";
                 slider.style.left = btn.offsetLeft + "px";
             }
             
-            // Set initial position on load
             const activeBtn = document.querySelector(".tab-btn.active") || tabBtns[0];
             moveSlider(activeBtn);
             
-            // Recalculate if the user resizes their screen
             window.addEventListener("resize", () => {
                 const current = document.querySelector(".tab-btn.active");
                 if (current) moveSlider(current);
@@ -29,15 +25,10 @@
 
             tabBtns.forEach(btn => {
                 btn.addEventListener("click", function() {
-                    // Remove active classes
                     tabBtns.forEach(b => b.classList.remove("active"));
                     tabContents.forEach(c => c.classList.remove("active"));
-                    
-                    // Add active class to clicked tab and move slider
                     this.classList.add("active");
                     moveSlider(this);
-                    
-                    // Show corresponding content
                     const target = document.getElementById(this.dataset.target);
                     if (target) target.classList.add("active");
                 });
@@ -77,7 +68,6 @@
         initQtyButtons(document);
 
         // 3. Lightbox
-        // UPDATED: Now targets the .custom-product-gallery__image class
         const mainImageContainer = document.querySelector(".custom-product-gallery__image");
         const mainImg = mainImageContainer ? mainImageContainer.querySelector("img") : null;
         const thumbnails = document.querySelectorAll(".flex-control-thumbs img");
@@ -162,15 +152,23 @@
             }, {passive: true});
         }
 
-        // 4. Quick View
+        // 4. Quick View (Modified to disable on mobile)
         const qvModal = document.getElementById("qv-modal");
         const qvClose = document.querySelector(".qv-close");
 
         if (qvModal) {
             document.querySelectorAll(".quick-view-btn").forEach(btn => {
-                btn.addEventListener("click", function() {
+                btn.addEventListener("click", function(e) {
                     const li = this.closest("li");
                     const data = li.querySelector(".qv-data");
+                    
+                    // If on mobile (<=768px), redirect to product page instead of opening modal
+                    if (window.innerWidth <= 768) {
+                        e.preventDefault();
+                        window.location.href = data.dataset.url;
+                        return;
+                    }
+
                     const pData = li.querySelector(".qv-price-data");
                     const cartData = li.querySelector(".qv-cart-data");
 
@@ -189,14 +187,23 @@
                     document.body.style.overflow = "hidden";
                 });
             });
+            
             if(qvClose) {
                 qvClose.addEventListener("click", () => {
                     qvModal.classList.remove("active");
                     document.body.style.overflow = "auto";
                 });
             }
+            
             qvModal.addEventListener("click", function(e) {
                 if (e.target === qvModal) {
+                    qvModal.classList.remove("active");
+                    document.body.style.overflow = "auto";
+                }
+            });
+            
+            document.addEventListener("keydown", function(e) {
+                if (qvModal.classList.contains("active") && e.key === "Escape") {
                     qvModal.classList.remove("active");
                     document.body.style.overflow = "auto";
                 }
@@ -204,7 +211,6 @@
         }
     }
 
-    // FIRE SCRIPTS IMMEDIATELY IF LITESPEED CACHE HAS ALREADY LOADED THE DOM
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", runStudio94Scripts);
     } else {

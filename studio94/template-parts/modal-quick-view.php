@@ -13,7 +13,7 @@
             <!-- Cart & Qty dynamically injected here via JS -->
             <div id="qv-cart-wrap"></div> 
             
-            <a id="qv-link" href="" class="btn btn-outline" style="margin-top: 1.5rem;">View Full Product</a>
+            <a id="qv-link" href="" class="btn btn-outline">View Product</a>
         </div>
     </div>
 </div>
