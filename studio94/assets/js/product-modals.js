@@ -274,3 +274,18 @@
     }
 
 })(window.jQuery || null);
+
+jQuery(document).ready(function($) {
+    $(document).on('added_to_cart', function(event, fragments, cart_hash, $button) {
+        // Target specifically the button inside the quick view modal
+        if ($button && $button.closest('.quick-view-modal').length) {
+            
+            // Change button text and add checkmark
+            $button.html('&#10003; Added');
+            $button.removeClass('loading');
+            
+            // Hide the dynamically appended "View Cart" link
+            $button.siblings('.added_to_cart').hide();
+        }
+    });
+});
