@@ -22,7 +22,6 @@ while (have_posts()) : the_post();
 			]); ?>
 		</div>
 
-		<!-- Top Section: Gallery & Summary -->
 		<div class="page-body-container" style="margin-bottom:2rem;">
 			<div class="single-product-top-split">
 				<div class="product-gallery">
@@ -31,7 +30,6 @@ while (have_posts()) : the_post();
 					$attachment_ids = $product->get_gallery_image_ids();
 					if ($main_image_id) {
 						$main_img_url = wp_get_attachment_image_url($main_image_id, 'full');
-                        // UPDATED: Replaced woocommerce-product-gallery classes with custom-product-gallery
 						echo '<div class="custom-product-gallery"><div class="custom-product-gallery__wrapper"><div class="custom-product-gallery__image"><img src="' . esc_url($main_img_url) . '" data-full="' . esc_url($main_img_url) . '" class="wp-post-image" alt="" /></div></div>';
 						if ($attachment_ids) {
 							echo '<ul class="flex-control-nav flex-control-thumbs"><li><img src="' . esc_url(wp_get_attachment_image_url($main_image_id, 'woocommerce_thumbnail')) . '" data-full="' . esc_url($main_img_url) . '" class="active-thumb" /></li>';
@@ -46,14 +44,18 @@ while (have_posts()) : the_post();
 				</div>
 
 				<div class="product-summary">
-					<h1 class="product-title"><?php the_title(); ?></h1>
-					<div class="price-wrap"><?php woocommerce_template_single_price(); ?></div>
+	<h1 class="product-title"><?php the_title(); ?></h1>
+	<?php if ( $product->get_rating_count() > 0 ) : ?>
+		<div class="product-rating-wrap" style="margin-bottom: 1rem;">
+			<?php echo wc_get_rating_html( $product->get_average_rating() ); ?>
+		</div>
+	<?php endif; ?>
+	<div class="price-wrap"><?php woocommerce_template_single_price(); ?></div>
 					<div class="short-desc"><?php woocommerce_template_single_excerpt(); ?></div>
 					<div class="cart-actions-wrapper">
     <?php 
-    // Filter button text specifically for the single product page
     add_filter( 'woocommerce_product_single_add_to_cart_text', function() {
-        return __( 'Add to Cart', 'woocommerce' );
+        return __( 'Add to cart', 'woocommerce' );
     } );
     woocommerce_template_single_add_to_cart(); 
     ?>
@@ -63,11 +65,10 @@ while (have_posts()) : the_post();
 			</div>
 		</div>
 
-		<!-- Middle Section: Tabs (Details & Reviews) -->
 		<div class="page-body-container" style="margin-bottom:2rem;">
 			<div class="product-specs-wrap">
 				<div class="product-tabs">
-					<h2 class="tab-btn active" data-target="tab-details">Product Details</h2>
+					<h2 class="tab-btn active" data-target="tab-details">Product details</h2>
 					<h2 class="tab-btn" data-target="tab-reviews">Reviews (<?php echo get_comments_number(); ?>)</h2>
 				</div>
 			</div>
@@ -104,7 +105,6 @@ while (have_posts()) : the_post();
 
 			<div class="tab-content" id="tab-reviews">
 				<div class="reviews-section" id="reviews">
-					<!-- Hides default WC title to prevent duplicates -->
 					<style>
 						.woocommerce-Reviews-title {
 							display: none !important;
@@ -117,7 +117,7 @@ while (have_posts()) : the_post();
 		</div>
 
 		<?php get_template_part('template-parts/related-products'); ?>
-	</div> <!-- End of main product wrap -->
+	</div>
 
 	<?php get_template_part('template-parts/modal-quick-view'); ?>
 	<?php get_template_part('template-parts/modal-lightbox'); ?>

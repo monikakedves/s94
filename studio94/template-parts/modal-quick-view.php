@@ -5,15 +5,16 @@
             <img id="qv-img-src" src="" alt="">
         </div>
         <div class="qv-info">
-            <h2 id="qv-title"></h2>
-            <!-- Matches related products price structure exactly -->
+            <h2 id="qv-title" style="margin-bottom: 0.5rem;"></h2>
+            
+            <div id="qv-rating" style="margin-bottom: 1rem;"></div>
+            
             <div id="qv-price" class="qv-price price-wrap custom-related"></div>
             <div id="qv-desc" class="qv-desc"></div>
             
-            <!-- Cart & Qty dynamically injected here via JS -->
             <div id="qv-cart-wrap"></div> 
             
-            <a id="qv-link" href="" class="btn btn-outline">View Product</a>
+            <a id="qv-link" href="" class="btn btn-outline">View product</a>
         </div>
     </div>
 </div>

@@ -1,9 +1,7 @@
 <?php
-/**
- * Display single product reviews (comments)
- */
+
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly.
+	exit;
 }
 
 global $product;
@@ -18,9 +16,8 @@ if ( ! comments_open() ) {
 			<?php
 			$count = $product->get_review_count();
 			if ( $count && wc_review_ratings_enabled() ) {
-				/* translators: 1: reviews count 2: product name */
 				$reviews_title = sprintf( esc_html( _n( '%1$s review for %2$s', '%1$s reviews for %2$s', $count, 'woocommerce' ) ), esc_html( $count ), '<span>' . get_the_title() . '</span>' );
-				echo apply_filters( 'woocommerce_reviews_title', $reviews_title, $count, $product ); // WPCS: XSS ok.
+				echo apply_filters( 'woocommerce_reviews_title', $reviews_title, $count, $product );
 			} else {
 				esc_html_e( 'Reviews', 'woocommerce' );
 			}
@@ -59,7 +56,6 @@ if ( ! comments_open() ) {
 				<?php
 				$commenter    = wp_get_current_commenter();
 				
-                // Manually build the name/email fields to prevent the undefined function error
 				$name_email_required = (bool) get_option( 'require_name_email', 1 );
 				$fields              = array(
 					'author' => array(
@@ -91,9 +87,8 @@ if ( ! comments_open() ) {
 				}
 
 				$comment_form = array(
-					/* translators: %s is product title */
-					'title_reply' => have_comments() ? __( 'Add a review', 'woocommerce' ) : __( 'Write a Review', 'woocommerce' ),
-					/* translators: %s is product title */
+					'title_reply' => have_comments() ? __( 'Add a review', 'woocommerce' ) : __( 'Write a review', 'woocommerce' ),
+
 					'title_reply_to'      => esc_html__( 'Leave a Reply to %s', 'woocommerce' ),
 					'title_reply_before'  => '<span id="reply-title" class="comment-reply-title">',
 					'title_reply_after'   => '</span>',
@@ -104,9 +99,8 @@ if ( ! comments_open() ) {
 					'fields'              => $comment_fields,
 				);
 
-                // Add "Your Rating*"
 				if ( wc_review_ratings_enabled() ) {
-					$comment_form['comment_field'] .= '<div class="comment-form-rating"><label for="rating">' . esc_html__( 'Your Rating*', 'woocommerce' ) . '</label><select name="rating" id="rating" required>
+					$comment_form['comment_field'] .= '<div class="comment-form-rating"><label for="rating">' . esc_html__( 'Your rating*', 'woocommerce' ) . '</label><select name="rating" id="rating" required>
 						<option value="">' . esc_html__( 'Rate&hellip;', 'woocommerce' ) . '</option>
 						<option value="5">' . esc_html__( 'Perfect', 'woocommerce' ) . '</option>
 						<option value="4">' . esc_html__( 'Good', 'woocommerce' ) . '</option>
@@ -116,8 +110,7 @@ if ( ! comments_open() ) {
 					</select></div>';
 				}
 
-                // Add "Your Review*"
-				$comment_form['comment_field'] .= '<p class="comment-form-comment"><label for="comment">' . esc_html__( 'Your Review*', 'woocommerce' ) . '</label><textarea id="comment" name="comment" cols="45" rows="8" required></textarea></p>';
+				$comment_form['comment_field'] .= '<p class="comment-form-comment"><label for="comment">' . esc_html__( 'Your review*', 'woocommerce' ) . '</label><textarea id="comment" name="comment" cols="45" rows="8" required></textarea></p>';
 
 				comment_form( apply_filters( 'woocommerce_product_review_comment_form_args', $comment_form ) );
 				?>

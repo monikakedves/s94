@@ -7,7 +7,7 @@ if ( $related ) :
 ?>
 <div class="page-body-container" style="margin-bottom:2rem;">
     <div class="related-products-wrap">
-        <h2>Related Products</h2>
+        <h2>Related products</h2>
         <ul class="custom-related">
             <?php 
             foreach ( $related as $rid ) :
@@ -21,7 +21,6 @@ if ( $related ) :
                 $fi_url = get_the_post_thumbnail_url( $rid, 'large' );
                 $exc = apply_filters( 'woocommerce_short_description', $rp->get_short_description() );
                 
-                // Pre-render the cart form for the modal
                 ob_start();
                 $original_post = $GLOBALS['post'];
                 $GLOBALS['post'] = get_post( $rid );
@@ -46,11 +45,15 @@ if ( $related ) :
                             <a href="<?php echo esc_url( $p_url ); ?>">
                                 <h3 class="woocommerce-loop-product__title"><?php echo esc_html( $p_title ); ?></h3>
                             </a>
+                            <?php if ( $rp->get_rating_count() > 0 ) : ?>
+                                <div class="loop-product-rating" style="margin-top: 0.4rem;">
+                                    <?php echo wc_get_rating_html( $rp->get_average_rating() ); ?>
+                                </div>
+                            <?php endif; ?>
                         </div>
                         <div class="product-price-row">
                             <span class="price"><?php echo $p_price; ?></span>
                             <?php 
-                            // Native WooCommerce AJAX Add to Cart Button (Hardcoded 'Add to Cart' string)
                             echo sprintf(
                                 '<a href="%s" data-quantity="1" class="%s" %s>%s</a>',
                                 esc_url( $rp->add_to_cart_url() ),
@@ -66,14 +69,14 @@ if ( $related ) :
                                     'aria-label'       => $rp->add_to_cart_description(),
                                     'rel'              => 'nofollow',
                                 ) ),
-                                esc_html__( 'Add to Cart', 'woocommerce' )
+                                esc_html__( 'Add to cart', 'woocommerce' )
                             );
                             ?>
                         </div>
                     </div>
 
-                    <!-- Hidden Data for JS Modal Injection -->
                     <div class="qv-data" style="display:none;" data-title="<?php echo esc_attr( $p_title ); ?>" data-img="<?php echo esc_url( $fi_url ); ?>" data-url="<?php echo esc_url( $p_url ); ?>"><?php echo wp_kses_post( $exc ); ?></div>
+                    <div class="qv-rating-data" style="display:none;"><?php echo $rp->get_rating_count() > 0 ? wc_get_rating_html( $rp->get_average_rating() ) : ''; ?></div>
                     <div class="qv-price-data" style="display:none;"><?php echo $p_price; ?></div>
                     <div class="qv-cart-data" style="display:none;"><?php echo htmlspecialchars( $cart_form ); ?></div>
                 </li>

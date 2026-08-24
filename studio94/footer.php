@@ -14,8 +14,8 @@
 
 </footer>
 
-</main> <!-- End Main Content -->
-</div> <!-- End Site Wrapper -->
+</main>
+</div>
 
 <?php wp_footer(); ?>
 </body>

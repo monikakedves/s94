@@ -37,17 +37,14 @@
 		<?php endif; ?>
 	</header>
 
-	<!-- 2. Body & Sidebar Container -->
 	<div class="page-layout-wrapper <?php echo esc_attr($has_sidebar); ?>">
 
-		<!-- Main Content (Body) -->
 		<div class="page-body-container">
 			<div class="page-content">
 				<?php the_content(); ?>
 			</div>
 		</div>
 
-		<!-- Inner Sidebar (Only if turned on) -->
 		<?php if ($has_sidebar) : ?>
 			<aside class="inner-sidebar">
 				<div class="inner-sidebar-sticky">
