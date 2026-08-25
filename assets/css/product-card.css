@@ -1,0 +1,659 @@
+/* ==========================================================================
+   STUDIO 94 — Product Card
+   Styles for the shop grid product card, the shop filter/sort bar, and the
+   "in stock only" toggle. Extracted from style.css so all card-related
+   styling lives in one place alongside product-card.php and product-card.js.
+   ========================================================================== */
+
+/* --- Card grid layout ----------------------------------------------------- */
+.custom-related,
+ul.custom-related {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: grid !important;
+	grid-template-columns: repeat(4, 1fr) !important;
+	gap: 20px;
+	width: 100%;
+	box-sizing: border-box;
+}
+ul.custom-related li.product {
+	width: 100% !important;
+	max-width: 100%;
+	box-sizing: border-box;
+	margin: 0 !important;
+}
+.custom-related .product {
+	position: relative;
+	text-align: left;
+}
+ul.custom-related li.s94-no-products {
+	grid-column: 1 / -1;
+	width: 100%;
+	text-align: center;
+	padding: 4rem 2rem;
+	font-weight: 600;
+	font-size: 1.2rem;
+	list-style: none;
+	background: transparent !important;
+	border-radius: 0 !important;
+	box-shadow: none !important;
+}
+
+/* --- Card image + sale badge + quick view --------------------------------- */
+.custom-related .product-img-wrap {
+	position: relative;
+	overflow: hidden;
+	border-radius: var(--radius-large);
+	margin-bottom: 1rem;
+	background: var(--surface-color);
+}
+.custom-related .product-img-wrap img {
+	width: 100%;
+	height: auto;
+	aspect-ratio: 1;
+	object-fit: cover;
+	display: block;
+}
+.custom-related .onsale {
+	position: absolute !important;
+	top: 10px !important;
+	right: -61px !important;
+	min-height: unset !important;
+	width: 180px !important;
+	left: auto !important;
+	background: var(--brand-rose) !important;
+	color: #fff !important;
+	padding: 8px 0 !important;
+	font-size: 1.05rem !important;
+	font-weight: 700 !important;
+	border-radius: 0 !important;
+	text-transform: uppercase !important;
+	letter-spacing: 2px !important;
+	box-shadow: none !important;
+	z-index: 20 !important;
+	text-align: center !important;
+	display: block !important;
+	line-height: 1.2 !important;
+	transform: rotate(45deg) !important;
+}
+.quick-view-overlay {
+	position: absolute;
+	inset: 0;
+	background: rgb(0 0 0 / .4);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	transition: opacity .3s ease;
+	z-index: 5;
+	pointer-events: none;
+}
+.custom-related .product-img-wrap:hover .quick-view-overlay {
+	opacity: 1;
+}
+.quick-view-btn {
+	pointer-events: auto;
+	background: #fff;
+	color: var(--text-main);
+	border: none;
+	padding: .8rem 1.5rem;
+	border-radius: var(--radius-pill);
+	font-weight: 700;
+	cursor: pointer;
+	transform: translateY(10px);
+	transition: transform .3s ease, background .3s ease;
+}
+.custom-related .product-img-wrap:hover .quick-view-btn {
+	transform: translateY(0);
+}
+.quick-view-btn:hover {
+	background: var(--brand-denim);
+	color: #fff;
+}
+
+/* --- Card title + rating ---------------------------------------------------*/
+.custom-related .product-title-row {
+	display: block;
+	width: 100%;
+	margin-bottom: .5rem;
+}
+.custom-related .woocommerce-loop-product__title {
+	font-size: 1.2rem !important;
+	font-weight: 700 !important;
+	text-align: left;
+	margin: 0 !important;
+	color: var(--text-main);
+	width: 100%;
+	line-height: 1.3 !important;
+}
+.product-rating-wrap,
+.loop-product-rating {
+	display: flex !important;
+	justify-content: flex-start !important;
+	align-items: center !important;
+	width: 100% !important;
+	clear: both !important;
+}
+.loop-product-rating .star-rating {
+	float: none !important;
+	margin: 0 !important;
+	width: 6.5em !important;
+	height: 1.2em !important;
+	display: block !important;
+}
+
+/* --- Card price row --------------------------------------------------------
+   Current price must have no underline. Old (struck-through) price must
+   only show the single strikethrough line — no extra over/underlines. */
+.custom-related .product-price-row,
+.product-info-wrap .product-price-row {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: center;
+	margin-top: .8rem;
+	gap: .5rem;
+}
+.product-info-wrap .product-price-row .button {
+	white-space: nowrap;
+	flex: 0 0 auto;
+}
+.custom-related .price {
+	display: flex !important;
+	align-items: center !important;
+	gap: 8px !important;
+	margin: 0;
+	line-height: 1;
+}
+.custom-related .price del {
+	font-size: 1.15rem !important;
+	color: var(--text-main) !important;
+	font-weight: 500;
+	text-decoration: line-through !important;
+	text-decoration-color: currentColor !important;
+	text-decoration-style: solid !important;
+	border: none !important;
+	margin: 3px 0 0 0 !important;
+	padding: 0 !important;
+	line-height: 1 !important;
+	display: flex !important;
+	align-items: center !important;
+}
+.custom-related .price del .amount,
+.custom-related .price del bdi {
+	color: var(--text-main) !important;
+	text-decoration: none !important;
+	border: none !important;
+}
+.custom-related .price ins {
+	text-decoration: none !important;
+	border: none !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	line-height: 1 !important;
+	display: flex !important;
+	align-items: center !important;
+}
+.custom-related .price ins .amount,
+.custom-related .price ins bdi,
+.custom-related .price > .amount {
+	color: var(--brand-rose) !important;
+	font-size: 1.5rem !important;
+	font-weight: 700;
+	text-decoration: none !important;
+	border: none !important;
+}
+
+/* --- Card add-to-cart button ------------------------------------------------
+   Icon-only button, no text in any state. Three icon layers are stacked
+   (add / added / remove) and only one is visible at a time via classes:
+     default         -> icon-add    (cart_add.svg)
+     .in-cart         -> icon-added  (cart_added.svg)
+     .in-cart:hover    -> icon-remove (cart_remove.svg), button turns red
+     .is-loading       -> dims the button while an AJAX call is in flight
+   Full reset on the <button> itself so no browser default (background,
+   border, outline, tap-highlight) can flash through on click/hover. */
+.s94-cart-btn {
+	all: unset;
+	position: relative;
+	box-sizing: border-box;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 42px;
+	height: 42px;
+	border-radius: 50%;
+	background-color: var(--brand-denim);
+	cursor: pointer;
+	flex-shrink: 0;
+	margin-left: auto;
+	-webkit-tap-highlight-color: transparent;
+	outline: none;
+	transition: background-color .2s ease, opacity .2s ease;
+}
+.s94-cart-btn::-moz-focus-inner {
+	border: 0;
+}
+.s94-cart-btn:focus-visible {
+	box-shadow: 0 0 0 3px var(--brand-rose-light);
+}
+.s94-cart-btn:hover {
+	background-color: var(--brand-indigo);
+}
+.s94-cart-btn.is-loading {
+	opacity: .6;
+	pointer-events: none;
+}
+.s94-cart-btn .screen-reader-text {
+	position: absolute !important;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+.s94-cart-btn .cart-icon {
+	position: absolute;
+	inset: 0;
+	margin: auto;
+	width: 20px;
+	height: 20px;
+	display: block;
+	background-color: #fff;
+	-webkit-mask-size: contain;
+	mask-size: contain;
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	mask-position: center;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity .15s ease;
+}
+.s94-cart-btn .icon-add {
+	-webkit-mask-image: url(../images/cart_add.svg);
+	mask-image: url(../images/cart_add.svg);
+	opacity: 1;
+}
+.s94-cart-btn .icon-added {
+	-webkit-mask-image: url(../images/cart_added.svg);
+	mask-image: url(../images/cart_added.svg);
+	opacity: 0;
+}
+.s94-cart-btn .icon-remove {
+	-webkit-mask-image: url(../images/cart_remove.svg);
+	mask-image: url(../images/cart_remove.svg);
+	opacity: 0;
+}
+.s94-cart-btn.in-cart {
+	background-color: var(--brand-indigo);
+}
+.s94-cart-btn.in-cart .icon-add {
+	opacity: 0;
+}
+.s94-cart-btn.in-cart .icon-added {
+	opacity: 1;
+}
+.s94-cart-btn.in-cart:hover {
+	background-color: #d9534f;
+}
+.s94-cart-btn.in-cart:hover .icon-added {
+	opacity: 0;
+}
+.s94-cart-btn.in-cart:hover .icon-remove {
+	opacity: 1;
+}
+
+/* --- Shop archive grid overrides -------------------------------------------- */
+.archive ul.custom-related {
+	justify-content: flex-start !important;
+	justify-items: flex-start !important;
+	direction: ltr !important;
+	width: 100% !important;
+	margin: 0 !important;
+	padding-left: 0 !important;
+	margin-left: 0 !important;
+}
+.archive ul.custom-related li.product {
+	text-align: left !important;
+	float: none !important;
+	margin-left: 0 !important;
+	padding-left: 0 !important;
+}
+.archive ul.custom-related::before,
+.archive ul.custom-related::after {
+	display: none !important;
+	content: none !important;
+}
+.archive .custom-related .onsale {
+	top: 20px !important;
+	right: -50px !important;
+}
+.archive .custom-related .woocommerce-loop-product__title {
+	font-size: 1.5rem !important;
+}
+.archive .custom-related .product-title-row {
+	margin-bottom: 0 !important;
+}
+.archive .custom-related .product-price-row {
+	margin-top: 0 !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	height: auto !important;
+}
+.archive .custom-related .price {
+	display: flex !important;
+	align-items: center !important;
+	margin: 0 !important;
+	line-height: 1 !important;
+}
+.archive .custom-related .add_to_cart_button {
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	margin: 0 !important;
+}
+.archive .custom-related .loop-product-rating {
+	margin-top: -10px !important;
+}
+
+/* --- Shop top row: filters + sorting ---------------------------------------- */
+.s94-shop-top-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1.5rem;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 1.5rem;
+	background: var(--surface-color);
+	padding: 1.5rem 2rem;
+	border-radius: var(--radius-large);
+	box-shadow: 0 4px 15px rgb(0 0 0 / .02);
+	position: relative;
+	z-index: 100;
+}
+.s94-custom-filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1.5rem;
+	align-items: center;
+	flex-grow: 1;
+	position: relative;
+	z-index: 200;
+}
+.s94-filter-category {
+	position: relative;
+	z-index: 300;
+}
+.s94-filter-price {
+	display: flex;
+	align-items: center;
+	gap: .5rem;
+}
+.s94-filter-price input {
+	width: 100px;
+	padding: .8rem 1rem;
+	border: 2px solid #eaeaea;
+	border-radius: 25px;
+	background: #fff;
+	font-family: inherit;
+	font-size: 1rem;
+	font-weight: 600;
+	color: var(--text-main);
+	outline: 0;
+	transition: border-color .3s;
+	text-align: center;
+}
+.s94-filter-price input:focus {
+	border-color: var(--brand-pink);
+}
+.s94-filter-price input[type=number]::-webkit-inner-spin-button,
+.s94-filter-price input[type=number]::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+.s94-separator {
+	font-weight: 700;
+	color: var(--text-light);
+}
+.s94-filter-actions {
+	display: flex;
+	gap: .5rem;
+}
+.s94-filter-actions .btn {
+	margin: 0;
+	padding: .8rem 2rem;
+	border-radius: 25px;
+}
+.s94-apply-btn {
+	background: var(--text-main);
+}
+.s94-apply-btn:hover {
+	background: var(--brand-pink);
+}
+.s94-clear-btn {
+	border-color: #eaeaea;
+}
+.s94-clear-btn:hover {
+	color: #fff !important;
+}
+.s94-sorting-wrap {
+	position: relative;
+	z-index: 150;
+}
+.s94-sorting-wrap form.woocommerce-ordering {
+	margin: 0 !important;
+	display: block;
+	width: 100%;
+}
+.s94-shop-bottom-row {
+	margin-bottom: 0;
+	padding-left: .5rem;
+}
+.s94-shop-bottom-row .woocommerce-result-count {
+	margin: 0 !important;
+	color: var(--text-light);
+	font-weight: 500;
+	font-size: 1.05rem;
+}
+.archive .shop-controls {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	align-items: center !important;
+	width: 100% !important;
+	margin-bottom: 2.5rem !important;
+	padding: 0 !important;
+}
+.archive .woocommerce-result-count {
+	margin: 0 auto 0 0 !important;
+	padding: 0 !important;
+	text-align: left !important;
+	font-weight: 500;
+	color: var(--text-light);
+}
+.archive form.woocommerce-ordering {
+	margin: 0 0 0 auto !important;
+}
+.archive form.woocommerce-ordering select.orderby {
+	display: none !important;
+}
+
+/* --- In stock only toggle ----------------------------------------------------
+   The checkbox is visually hidden; .s94-filter-instock-toggle is the visible
+   pill + knob. State is driven by the .is-on class (toggled in
+   product-card.js), not by CSS-only :checked matching, so the visual state
+   can never desync from the checkbox's real value. */
+.s94-filter-instock label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	cursor: pointer;
+	font-weight: 600;
+	color: var(--text-main);
+	margin: 0;
+}
+.s94-filter-instock input[type="checkbox"] {
+	position: absolute;
+	opacity: 0;
+	width: 1px;
+	height: 1px;
+	pointer-events: none;
+}
+.s94-filter-instock-toggle {
+	width: 46px;
+	height: 26px;
+	background: #eaeaea;
+	border-radius: 26px;
+	position: relative;
+	transition: background-color .3s ease;
+	flex-shrink: 0;
+}
+.s94-filter-instock-toggle::after {
+	content: "";
+	position: absolute;
+	left: 4px;
+	top: 4px;
+	width: 18px;
+	height: 18px;
+	background: #fff;
+	border-radius: 50%;
+	transition: transform .3s ease;
+	box-shadow: 0 2px 4px rgb(0 0 0 / .15);
+}
+.s94-filter-instock-toggle.is-on {
+	background: var(--brand-pink);
+}
+.s94-filter-instock-toggle.is-on::after {
+	transform: translateX(20px);
+	background: #fff;
+}
+
+/* --- Custom "sort by" dropdown (shop-only) ----------------------------------- */
+.custom-orderby-dropdown {
+	position: relative;
+	width: 240px;
+	font-family: inherit;
+	z-index: 100;
+}
+.custom-orderby-selected {
+	background-color: var(--surface-color, #ffffff) !important;
+	color: var(--text-main, #333333) !important;
+	font-weight: 600 !important;
+	padding: .9rem 1.5rem !important;
+	border: 2px solid #eaeaea !important;
+	border-radius: 25px !important;
+	cursor: pointer;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	transition: all .2s ease;
+	user-select: none;
+}
+.custom-orderby-selected .chevron {
+	width: 12px;
+	height: 8px;
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23333333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: center;
+	transition: transform .3s ease;
+}
+.custom-orderby-dropdown.open .custom-orderby-selected {
+	border-radius: 25px 25px 0 0 !important;
+	border-color: #eaeaea !important;
+	border-bottom-color: transparent !important;
+}
+.custom-orderby-dropdown.open .chevron {
+	transform: rotate(180deg);
+}
+.custom-orderby-list {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	right: 0;
+	background: var(--surface-color, #ffffff) !important;
+	border: 2px solid #eaeaea !important;
+	border-top: none !important;
+	border-radius: 0 0 25px 25px !important;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: none;
+	box-shadow: 0 15px 30px rgb(0 0 0 / .05);
+	overflow: hidden;
+}
+.custom-orderby-dropdown.open .custom-orderby-list {
+	display: block;
+}
+.custom-orderby-list li {
+	padding: .9rem 1.5rem;
+	font-weight: 500;
+	color: var(--text-light, #666666);
+	cursor: pointer;
+	transition: background .2s, color .2s;
+	border-top: 1px solid #f5f5f5;
+}
+.custom-orderby-list li:first-child {
+	border-top: none;
+}
+.custom-orderby-list li:hover,
+.custom-orderby-list li.active {
+	background: var(--brand-rose-light, #ffecf0);
+	color: var(--brand-rose, #db9aab);
+}
+
+/* --- Responsive -------------------------------------------------------------- */
+@media (max-width: 1024px) {
+	ul.custom-related {
+		grid-template-columns: repeat(2, 1fr) !important;
+	}
+	.s94-shop-top-row {
+		flex-direction: column !important;
+		align-items: stretch !important;
+		width: 100% !important;
+	}
+	.s94-custom-filters,
+	.s94-sorting-wrap {
+		width: 100% !important;
+		flex-direction: column !important;
+		align-items: stretch !important;
+	}
+	.s94-filter-category {
+		width: 100% !important;
+	}
+	.s94-sorting-wrap form.woocommerce-ordering {
+		width: 100% !important;
+		display: block !important;
+	}
+	.custom-category-dropdown,
+	.custom-orderby-dropdown {
+		width: 100% !important;
+		min-width: 100% !important;
+		display: block !important;
+	}
+	.s94-filter-price {
+		width: 100% !important;
+	}
+	.s94-filter-price input {
+		flex-grow: 1 !important;
+		width: 50% !important;
+	}
+	.s94-filter-actions {
+		width: 100% !important;
+	}
+	.s94-filter-actions .btn {
+		flex-grow: 1 !important;
+		width: 100% !important;
+		display: block !important;
+		text-align: center !important;
+	}
+}
+@media (max-width: 568px) {
+	ul.custom-related {
+		grid-template-columns: 1fr !important;
+	}
+}

@@ -100,31 +100,33 @@
             }
 
             if (typeof jQuery !== 'undefined') {
-                jQuery(document.body).on('added_to_cart', function(e, fragments, hash, $btn) {
-                    var addedQty = 1;
-                    if ($btn) {
-                        var $qty = $btn.closest('form').find('input.qty');
-                        if ($qty.length) {
-                            addedQty = parseInt($qty.val()) || 1;
-                        } else if ($btn.data('quantity')) {
-                            addedQty = parseInt($btn.data('quantity')) || 1;
-                        }
-                    }
+                function studio94PulseCartWidget() {
                     var cartWidget = document.querySelector('.cart-widget');
+                    if (!cartWidget) return;
+                    cartWidget.style.transform = 'scale(1.05)';
+                    cartWidget.style.backgroundColor = 'var(--brand-rose-light)';
+                    cartWidget.style.color = 'var(--brand-rose)';
+                    setTimeout(() => {
+                        cartWidget.style.transform = '';
+                        cartWidget.style.backgroundColor = '';
+                        cartWidget.style.color = '';
+                    }, 400);
+                }
+
+                function studio94UpdateCartCount(fragments) {
                     var cartCountEl = document.querySelector('.cart-widget .cart-count');
-                    if (cartCountEl) {
-                        cartCountEl.innerText = (parseInt(cartCountEl.innerText) || 0) + addedQty;
-                        if (cartWidget) {
-                            cartWidget.style.transform = 'scale(1.05)';
-                            cartWidget.style.backgroundColor = 'var(--brand-rose-light)';
-                            cartWidget.style.color = 'var(--brand-rose)';
-                            setTimeout(() => {
-                                cartWidget.style.transform = '';
-                                cartWidget.style.backgroundColor = '';
-                                cartWidget.style.color = '';
-                            }, 400);
-                        }
+                    if (cartCountEl && fragments && typeof fragments.studio94_cart_count !== 'undefined') {
+                        cartCountEl.innerText = fragments.studio94_cart_count;
                     }
+                    studio94PulseCartWidget();
+                }
+
+                jQuery(document.body).on('added_to_cart', function(e, fragments) {
+                    studio94UpdateCartCount(fragments);
+                });
+
+                jQuery(document.body).on('removed_from_cart', function(e, fragments) {
+                    studio94UpdateCartCount(fragments);
                 });
             }
         });

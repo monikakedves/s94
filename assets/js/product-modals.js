@@ -30,6 +30,7 @@
     }
 
     function initQuickView() {
+        window.studio94InitQuickView = initQuickView;
         const qvModal = document.getElementById("qv-modal");
         const qvClose = document.querySelector(".qv-close");
 
@@ -274,164 +275,8 @@
             });
         }
 
-        const shopForm = document.querySelector('form.s94-custom-filters');
-        const gridContainer = document.querySelector('ul.custom-related');
-        const orderSelect = document.querySelector('form.woocommerce-ordering select.orderby');
-        const catSelect = document.querySelector('.s94-filter-category select');
-        const minPriceInput = document.querySelector('input[name="min_price"]');
-        const maxPriceInput = document.querySelector('input[name="max_price"]');
-        const instockToggle = document.querySelector('input[name="instock_post"]');
-        
-        let filterTimeout = null;
-
-        function createCustomDropdown(selectEl, wrapperClass) {
-            if (!selectEl) return;
-            const existingWrap = selectEl.parentNode.querySelector('.' + wrapperClass);
-            if(existingWrap) existingWrap.remove();
-
-            const customDropdown = document.createElement('div');
-            customDropdown.className = wrapperClass + ' custom-dropdown-wrap';
-
-            const selectedDisplay = document.createElement('div');
-            selectedDisplay.className = 'custom-dropdown-selected';
-            const activeOption = selectEl.options[selectEl.selectedIndex] || selectEl.options[0];
-            selectedDisplay.innerHTML = `<span>${activeOption.innerHTML}</span><span class="chevron"></span>`;
-
-            const optionsList = document.createElement('ul');
-            optionsList.className = 'custom-dropdown-list';
-
-            Array.from(selectEl.options).forEach(option => {
-                const li = document.createElement('li');
-                li.innerHTML = option.innerHTML; 
-                li.dataset.value = option.value;
-                if (option.selected) li.classList.add('active');
-
-                li.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    selectedDisplay.querySelector('span').innerHTML = this.innerHTML;
-                    selectEl.value = this.dataset.value;
-
-                    optionsList.querySelectorAll('li').forEach(el => el.classList.remove('active'));
-                    this.classList.add('active');
-                    customDropdown.classList.remove('open');
-
-                    performAjaxFilter();
-                });
-
-                optionsList.appendChild(li);
-            });
-
-            customDropdown.appendChild(selectedDisplay);
-            customDropdown.appendChild(optionsList);
-            selectEl.parentNode.appendChild(customDropdown);
-            selectEl.style.display = 'none';
-
-            selectedDisplay.addEventListener('click', function(e) {
-                e.stopPropagation();
-                document.querySelectorAll('.custom-dropdown-wrap').forEach(d => {
-                    if (d !== customDropdown) d.classList.remove('open');
-                });
-                customDropdown.classList.toggle('open');
-            });
-        }
-
-        document.addEventListener('click', function() {
-            document.querySelectorAll('.custom-dropdown-wrap').forEach(d => d.classList.remove('open'));
-        });
-
-        if(orderSelect) createCustomDropdown(orderSelect, 'custom-orderby-dropdown');
-        if(catSelect) createCustomDropdown(catSelect, 'custom-category-dropdown');
-
-        function debounceAjaxFilter() {
-            clearTimeout(filterTimeout);
-            filterTimeout = setTimeout(() => performAjaxFilter(), 600);
-        }
-
-        if (minPriceInput) minPriceInput.addEventListener('input', debounceAjaxFilter);
-        if (maxPriceInput) maxPriceInput.addEventListener('input', debounceAjaxFilter);
-        if (instockToggle) instockToggle.addEventListener('change', performAjaxFilter);
-
-        function performAjaxFilter(reset = false) {
-            if (!gridContainer) return;
-            gridContainer.style.opacity = '0.4';
-            gridContainer.style.pointerEvents = 'none';
-
-            let url = new URL(window.location.href.split('?')[0]);
-
-            if (!reset) {
-                const cat = catSelect ? catSelect.value : '';
-                const minP = minPriceInput ? minPriceInput.value : '';
-                const maxP = maxPriceInput ? maxPriceInput.value : '';
-                const inStock = instockToggle && instockToggle.checked ? '1' : '';
-                const orderby = orderSelect ? orderSelect.value : '';
-
-                if (cat) url.searchParams.set('product_cat', cat);
-                if (minP) url.searchParams.set('min_price', minP);
-                if (maxP) url.searchParams.set('max_price', maxP);
-                if (inStock) url.searchParams.set('instock_post', inStock);
-                if (orderby) url.searchParams.set('orderby', orderby);
-            } else {
-                if (catSelect) {
-                    catSelect.value = '';
-                    const catWrap = document.querySelector('.custom-category-dropdown');
-                    if (catWrap) {
-                        catWrap.querySelector('.custom-dropdown-selected span').innerHTML = catSelect.options[0].innerHTML;
-                        catWrap.querySelectorAll('li').forEach(li => li.classList.remove('active'));
-                        catWrap.querySelector('li').classList.add('active');
-                    }
-                }
-                if (orderSelect) {
-                    orderSelect.value = 'menu_order';
-                    const ordWrap = document.querySelector('.custom-orderby-dropdown');
-                    if (ordWrap) {
-                        ordWrap.querySelector('.custom-dropdown-selected span').innerHTML = orderSelect.options[0].innerHTML;
-                        ordWrap.querySelectorAll('li').forEach(li => li.classList.remove('active'));
-                        ordWrap.querySelector('li').classList.add('active');
-                    }
-                }
-                if (minPriceInput) minPriceInput.value = '';
-                if (maxPriceInput) maxPriceInput.value = '';
-                if (instockToggle) instockToggle.checked = false;
-            }
-
-            fetch(url.toString())
-                .then(response => response.text())
-                .then(html => {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-
-                    const newGrid = doc.querySelector('ul.custom-related');
-                    if (newGrid && newGrid.innerHTML.trim() !== '') {
-                        gridContainer.innerHTML = newGrid.innerHTML;
-                        initQuickView(); 
-                    } else {
-                        gridContainer.innerHTML = '<li class="s94-no-products">No products found matching your criteria.</li>';
-                    }
-
-                    const currentCount = document.querySelector('.woocommerce-result-count');
-                    const newCount = doc.querySelector('.woocommerce-result-count');
-                    if (currentCount && newCount) currentCount.innerHTML = newCount.innerHTML;
-                    else if (currentCount) currentCount.innerHTML = '';
-
-                    const currentPagination = document.querySelector('.pagination');
-                    const newPagination = doc.querySelector('.pagination');
-                    if (currentPagination && newPagination) currentPagination.innerHTML = newPagination.innerHTML;
-                    else if (currentPagination) currentPagination.innerHTML = '';
-
-                    gridContainer.style.opacity = '1';
-                    gridContainer.style.pointerEvents = 'auto';
-                    window.history.pushState({ path: url.toString() }, '', url.toString());
-                })
-                .catch(() => { window.location.href = url.toString(); });
-        }
-
-        const clearBtn = document.querySelector('.s94-clear-btn');
-        if (clearBtn) {
-            clearBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                performAjaxFilter(true);
-            });
-        }
+        // Shop grid filtering, sorting, and the in-stock toggle now live in
+        // assets/js/product-card.js alongside product-card.php/.css.
     }
 
     if (document.readyState === "loading") {
@@ -482,11 +327,17 @@
 })(window.jQuery || null);
 
 jQuery(document.body).on('added_to_cart', function(e, fragments, hash, $btn) {
-    if ($btn && $btn.length > 0) {
-        $btn.html('Added');
-        setTimeout(function() {
-            $btn.html('Add to cart');
-            $btn.removeClass('added');
-        }, 3000);
-    }
+    // Only ever touch the single-product-page "Add to cart" button. The
+    // shop-grid card button (.s94-cart-btn) manages its own icon states in
+    // assets/js/product-card.js and must never have its markup rewritten
+    // here, so this checks the exact button, not just a shared class.
+    if (!$btn || $btn.length === 0) return;
+    if (!$btn.is('.single_add_to_cart_button')) return;
+    if ($btn.is('.s94-cart-btn')) return;
+
+    $btn.html('Added');
+    setTimeout(function() {
+        $btn.html('Add to cart');
+        $btn.removeClass('added');
+    }, 3000);
 });

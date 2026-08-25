@@ -42,9 +42,95 @@ function studio94_enqueue_scripts() {
 	wp_enqueue_style('studio94-fonts', 'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap', false);
 	$theme_version = filemtime(get_stylesheet_directory() . '/style.css');
 	wp_enqueue_style('studio94-style', get_stylesheet_uri(), [], $theme_version);
+
+	$card_css_path = get_stylesheet_directory() . '/assets/css/product-card.css';
+	wp_enqueue_style('studio94-product-card', get_template_directory_uri() . '/assets/css/product-card.css', ['studio94-style'], file_exists($card_css_path) ? filemtime($card_css_path) : $theme_version);
+
 	wp_enqueue_script('studio94-modals', get_template_directory_uri() . '/assets/js/product-modals.js', [], $theme_version, true);
+
+	$card_js_path = get_stylesheet_directory() . '/assets/js/product-card.js';
+	wp_enqueue_script('studio94-product-card', get_template_directory_uri() . '/assets/js/product-card.js', [], file_exists($card_js_path) ? filemtime($card_js_path) : $theme_version, true);
+
+	if (class_exists('WooCommerce')) {
+		wp_localize_script('studio94-product-card', 'studio94Cart', [
+			'ajaxUrl' => admin_url('admin-ajax.php'),
+			'wcAjaxUrl' => WC_AJAX::get_endpoint('%%endpoint%%'),
+			'removeNonce' => wp_create_nonce('studio94_remove_from_cart'),
+		]);
+	}
 }
 add_action('wp_enqueue_scripts', 'studio94_enqueue_scripts');
+
+/**
+ * WooCommerce's own wc-add-to-cart.js binds click handlers to any
+ * .add_to_cart_button.ajax_add_to_cart element on the page and manages its
+ * own "Added"/"View cart" state. Our card button (assets/js/product-card.js)
+ * fully replaces that behaviour with icon-only states, so we dequeue
+ * WooCommerce's script to stop the two from fighting over the same clicks.
+ */
+function studio94_dequeue_wc_add_to_cart_script() {
+	wp_dequeue_script('wc-add-to-cart');
+	wp_deregister_script('wc-add-to-cart');
+}
+add_action('wp_enqueue_scripts', 'studio94_dequeue_wc_add_to_cart_script', 20);
+
+/**
+ * Removes a product from the cart by product ID, for the product-card
+ * "remove from cart" button (cart_remove.svg). Looks up the matching cart
+ * item key server-side so the front end only ever needs to know the
+ * product ID it already has in its data attributes.
+ */
+function studio94_ajax_remove_from_cart() {
+	check_ajax_referer('studio94_remove_from_cart', 'nonce');
+
+	if (!function_exists('WC') || !WC()->cart) {
+		wp_send_json_error(['message' => 'Cart unavailable']);
+	}
+
+	$product_id = isset($_POST['product_id']) ? absint($_POST['product_id']) : 0;
+	if (!$product_id) {
+		wp_send_json_error(['message' => 'Missing product ID']);
+	}
+
+	$removed = false;
+	foreach (WC()->cart->get_cart() as $cart_item_key => $cart_item) {
+		$match_id = $cart_item['variation_id'] ? $cart_item['variation_id'] : $cart_item['product_id'];
+		if ((int) $cart_item['product_id'] === $product_id || (int) $match_id === $product_id) {
+			WC()->cart->remove_cart_item($cart_item_key);
+			$removed = true;
+			break;
+		}
+	}
+
+	if (!$removed) {
+		wp_send_json_error(['message' => 'Item not found in cart']);
+	}
+
+	WC()->cart->calculate_totals();
+
+	wp_send_json_success([
+		'fragments' => apply_filters('woocommerce_add_to_cart_fragments', []),
+		'cart_hash' => WC()->cart->get_cart_hash(),
+		'cart_count' => WC()->cart->get_cart_contents_count(),
+	]);
+}
+add_action('wp_ajax_studio94_remove_from_cart', 'studio94_ajax_remove_from_cart');
+add_action('wp_ajax_nopriv_studio94_remove_from_cart', 'studio94_ajax_remove_from_cart');
+
+/**
+ * Exposes the current cart count via the standard WooCommerce cart
+ * fragments filter, keyed so product-card.js can read it directly from
+ * both the native add_to_cart AJAX response and our own remove endpoint,
+ * instead of guessing the new count client-side.
+ */
+function studio94_add_cart_count_fragment($fragments) {
+	if (function_exists('WC') && WC()->cart) {
+		$fragments['studio94_cart_count'] = WC()->cart->get_cart_contents_count();
+	}
+	return $fragments;
+}
+add_filter('woocommerce_add_to_cart_fragments', 'studio94_add_cart_count_fragment');
+add_filter('woocommerce_update_order_review_fragments', 'studio94_add_cart_count_fragment');
 
 function studio94_add_meta_boxes() {
 	foreach (['post', 'page'] as $screen) {

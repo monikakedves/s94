@@ -1,6 +1,8 @@
 <?php
 defined('ABSPATH') || exit;
 
+get_template_part('template-parts/product-card');
+
 get_header('shop');
 
 remove_action('woocommerce_before_main_content', 'woocommerce_output_content_wrapper', 10);
@@ -55,9 +57,9 @@ do_action('woocommerce_before_main_content');
 			</div>
 
 			<div class="s94-filter-instock">
-				<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600; color:var(--text-main); margin:0;">
-					<input type="checkbox" name="instock_post" value="1" style="display:none;" <?php checked(isset($_GET['instock_post']), true); ?> />
-					<div class="s94-toggle" style="order:-1; margin:0;"></div>
+				<label>
+					<input type="checkbox" name="instock_post" value="1" <?php checked( isset( $_GET['instock_post'] ) && $_GET['instock_post'] === '1' ); ?> />
+					<span class="s94-filter-instock-toggle"></span>
 					In stock only
 				</label>
 			</div>
@@ -86,73 +88,7 @@ do_action('woocommerce_before_main_content');
 		while (have_posts()) {
 			the_post();
 			global $product;
-			?>
-			<li <?php wc_product_class( '', $product ); ?>>
-				<div class="product-img-wrap">
-					<?php if ( $product->is_on_sale() ) echo '<span class="onsale">SALE!</span>'; ?>
-					<a href="<?php echo esc_url( $product->get_permalink() ); ?>" style="display:block; width:100%; height:100%;">
-						<?php echo $product->get_image( 'woocommerce_thumbnail' ); ?>
-					</a>
-					<div class="quick-view-overlay">
-						<button class="quick-view-btn" data-id="<?php echo esc_attr( $product->get_id() ); ?>">Quick View</button>
-					</div>
-				</div>
-
-				<div class="product-info-wrap">
-					<div class="product-title-row">
-						<a href="<?php echo esc_url( $product->get_permalink() ); ?>">
-							<h3 class="woocommerce-loop-product__title"><?php echo esc_html( $product->get_name() ); ?></h3>
-						</a>
-						<?php if ( $product->get_rating_count() > 0 ) : ?>
-							<div class="loop-product-rating" style="margin-top: 0.4rem;">
-								<?php echo wc_get_rating_html( $product->get_average_rating() ); ?>
-							</div>
-						<?php endif; ?>
-					</div>
-					
-					<div class="product-price-row">
-						<span class="price"><?php echo $product->get_price_html(); ?></span>
-						<?php 
-						echo sprintf(
-							'<a href="%s" data-quantity="1" class="%s" %s>%s</a>',
-							esc_url( $product->add_to_cart_url() ),
-							esc_attr( implode( ' ', array(
-								'button add_to_cart_button',
-								'product_type_' . $product->get_type(),
-								$product->is_purchasable() && $product->is_in_stock() ? 'add_to_cart_button' : '',
-								$product->supports( 'ajax_add_to_cart' ) && $product->is_purchasable() && $product->is_in_stock() ? 'ajax_add_to_cart' : '',
-							) ) ),
-							wc_implode_html_attributes( array(
-								'data-product_id'  => $product->get_id(),
-								'data-product_sku' => $product->get_sku(),
-								'aria-label'       => $product->add_to_cart_description(),
-								'rel'              => 'nofollow',
-							) ),
-							esc_html__( 'Add to cart', 'woocommerce' )
-						);
-						?>
-					</div>
-				</div>
-
-		        <div class="qv-data" style="display:none;" 
-		             data-title="<?php echo esc_attr( $product->get_name() ); ?>" 
-		             data-img="<?php echo esc_url( wp_get_attachment_image_url( $product->get_image_id(), 'large' ) ); ?>" 
-		             data-url="<?php echo esc_url( $product->get_permalink() ); ?>">
-		             <?php echo wp_kses_post( apply_filters( 'woocommerce_short_description', $product->get_short_description() ) ); ?>
-		        </div>
-		        <div class="qv-rating-data" style="display:none;">
-		            <?php echo $product->get_rating_count() > 0 ? wc_get_rating_html( $product->get_average_rating() ) : ''; ?>
-		        </div>
-		        <div class="qv-price-data" style="display:none;"><?php echo $product->get_price_html(); ?></div>
-				<div class="qv-cart-data" style="display:none;">
-					<?php 
-					ob_start();
-					woocommerce_template_single_add_to_cart(); 
-					echo htmlspecialchars( ob_get_clean() );
-					?>
-				</div>
-			</li>
-			<?php
+			studio94_render_product_card( $product );
 		}
 	}
 	?>
