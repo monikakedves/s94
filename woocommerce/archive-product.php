@@ -1,8 +1,6 @@
 <?php
 defined('ABSPATH') || exit;
 
-get_template_part('template-parts/product-card');
-
 get_header('shop');
 
 remove_action('woocommerce_before_main_content', 'woocommerce_output_content_wrapper', 10);
@@ -83,15 +81,13 @@ do_action('woocommerce_before_main_content');
 	</div>
 
 	<ul class="products custom-related columns-<?php echo esc_attr( wc_get_loop_prop( 'columns' ) ); ?>">
-	<?php
-	if (wc_get_loop_prop('total')) {
-		while (have_posts()) {
-			the_post();
-			global $product;
-			studio94_render_product_card( $product );
-		}
-	}
-	?>
+	<?php if (wc_get_loop_prop('total')) {
+    while (have_posts()) {
+        the_post();
+        wc_get_template_part( 'content', 'product' );
+    }
+}
+?>
 	</ul>
 
 	<div class="pagination">
