@@ -1,9 +1,3 @@
-/**
- * STUDIO 94 — Product Card
- * Handles the shop grid: category/price/in-stock filters, sort dropdown,
- * AJAX re-fetching of the product grid, the "in stock only" toggle, and the
- * card add/remove-from-cart button.
- */
 (function () {
   function runProductCardScripts() {
     const shopForm = document.querySelector("form.s94-custom-filters");
@@ -166,8 +160,8 @@
           const newGrid = doc.querySelector("ul.custom-related");
           if (newGrid && newGrid.innerHTML.trim() !== "") {
             gridContainer.innerHTML = newGrid.innerHTML;
-            if (typeof window.studio94InitQuickView === "function") {
-              window.studio94InitQuickView();
+            if (typeof window.studio94InitProductSliders === "function") {
+              window.studio94InitProductSliders();
             }
             if (typeof window.studio94InitCartButtons === "function") {
               window.studio94InitCartButtons(gridContainer);
@@ -332,15 +326,136 @@
     }
   }
 
+  function initProductSliders() {
+    document.querySelectorAll(".s94-slider-wrap").forEach((wrap) => {
+      if (wrap.dataset.sliderBound) return;
+      wrap.dataset.sliderBound = "1";
+
+      const track = wrap.querySelector(".s94-slider-track");
+      const slides = wrap.querySelectorAll(".s94-slide");
+      const prev = wrap.querySelector(".s94-prev");
+      const next = wrap.querySelector(".s94-next");
+
+      if (!track || slides.length <= 1) return;
+
+      let currentIndex = 0,
+        startX = 0,
+        currentTranslate = 0,
+        prevTranslate = 0;
+      let isDragging = false,
+        animationID,
+        dragged = false;
+
+      const setPositionByIndex = () => {
+        currentTranslate = currentIndex * -100;
+        prevTranslate = currentTranslate;
+        track.style.transform = `translateX(${currentTranslate}%)`;
+      };
+
+      // Hover logic
+      wrap.addEventListener("mouseenter", () => {
+        if (currentIndex === 0 && !isDragging) {
+          currentIndex = 1;
+          setPositionByIndex();
+        }
+      });
+      wrap.addEventListener("mouseleave", () => {
+        if (isDragging) dragEnd();
+        if (currentIndex === 1) {
+          currentIndex = 0;
+          setPositionByIndex();
+        }
+      });
+
+      // Arrow logic
+      if (prev)
+        prev.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          currentIndex =
+            currentIndex > 0 ? currentIndex - 1 : slides.length - 1;
+          setPositionByIndex();
+        });
+      if (next)
+        next.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          currentIndex =
+            currentIndex < slides.length - 1 ? currentIndex + 1 : 0;
+          setPositionByIndex();
+        });
+
+      // Drag logic
+      wrap.addEventListener("mousedown", dragStart);
+      wrap.addEventListener("touchstart", dragStart, { passive: true });
+      wrap.addEventListener("mouseup", dragEnd);
+      wrap.addEventListener("touchend", dragEnd);
+      wrap.addEventListener("mousemove", dragAction);
+      wrap.addEventListener("touchmove", dragAction, { passive: true });
+      wrap.addEventListener("click", (e) => {
+        if (dragged) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      });
+
+      function dragStart(e) {
+        if (e.target.closest(".s94-slider-arrow")) return;
+        if (e.type === "mousedown") e.preventDefault();
+        isDragging = true;
+        dragged = false;
+        startX = e.type.includes("mouse") ? e.pageX : e.touches[0].clientX;
+        animationID = requestAnimationFrame(animation);
+        track.style.transition = "none";
+      }
+
+      function dragAction(e) {
+        if (isDragging) {
+          const currentX = e.type.includes("mouse")
+            ? e.pageX
+            : e.touches[0].clientX;
+          const diff = ((currentX - startX) / wrap.offsetWidth) * 100;
+          if (Math.abs(diff) > 2) dragged = true;
+          currentTranslate = prevTranslate + diff;
+        }
+      }
+
+      function dragEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+        cancelAnimationFrame(animationID);
+        track.style.transition = "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)";
+
+        const movedBy = currentTranslate - prevTranslate;
+        if (movedBy < -15 && currentIndex < slides.length - 1)
+          currentIndex += 1;
+        else if (movedBy > 15 && currentIndex > 0) currentIndex -= 1;
+
+        setPositionByIndex();
+        setTimeout(() => {
+          dragged = false;
+        }, 50);
+      }
+
+      function animation() {
+        track.style.transform = `translateX(${currentTranslate}%)`;
+        if (isDragging) requestAnimationFrame(animation);
+      }
+    });
+  }
+
   window.studio94InitCartButtons = initCartButtons;
+  window.studio94InitProductSliders = initProductSliders;
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", function () {
       initCartButtons(document);
       runProductCardScripts();
+      initProductSliders();
     });
   } else {
     initCartButtons(document);
     runProductCardScripts();
+    initProductSliders();
   }
 })();

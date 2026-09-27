@@ -31,7 +31,6 @@
 		<?php endif; ?>
 	</header>
 
-	<!-- 2. Body Container -->
 	<div class="page-layout-wrapper">
 		<div class="page-body-container no-sidebar">
 			<div class="page-content">

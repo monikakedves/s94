@@ -47,23 +47,22 @@ function studio94_enqueue_scripts() {
     $card_css_path = get_stylesheet_directory() . '/assets/css/product-card.css';
     wp_enqueue_style('studio94-product-card', get_template_directory_uri() . '/assets/css/product-card.css', ['studio94-style'], file_exists($card_css_path) ? filemtime($card_css_path) : $theme_version);
 
-    // Main theme script (logo flip, tabs, gallery/lightbox, single-product AJAX cart, variation dropdowns)
     $main_js_path = get_stylesheet_directory() . '/assets/js/main.js';
     wp_enqueue_script('studio94-main', get_template_directory_uri() . '/assets/js/main.js', ['jquery'], file_exists($main_js_path) ? filemtime($main_js_path) : $theme_version, true);
 
-    // Quick view modal – depends on main.js (uses window.studio94InitQtyButtons)
-    $modals_js_path = get_stylesheet_directory() . '/assets/js/product-modals.js';
-    wp_enqueue_script('studio94-modals', get_template_directory_uri() . '/assets/js/product-modals.js', ['jquery', 'studio94-main'], file_exists($modals_js_path) ? filemtime($modals_js_path) : $theme_version, true);
+    // Enqueue the new main_2.js file
+    $main_2_js_path = get_stylesheet_directory() . '/assets/js/main_2.js';
+    wp_enqueue_script('studio94-main-2', get_template_directory_uri() . '/assets/js/main_2.js', ['jquery'], file_exists($main_2_js_path) ? filemtime($main_2_js_path) : $theme_version, true);
 
     $card_js_path = get_stylesheet_directory() . '/assets/js/product-card.js';
     wp_enqueue_script('studio94-product-card', get_template_directory_uri() . '/assets/js/product-card.js', [], file_exists($card_js_path) ? filemtime($card_js_path) : $theme_version, true);
 
     if (class_exists('WooCommerce')) {
-        // Attached to main.js (owns single-product add/update/remove). It's a global, so product-card.js can read it too.
         $cart_config = [
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'wcAjaxUrl' => WC_AJAX::get_endpoint('%%endpoint%%'),
             'removeNonce' => wp_create_nonce('studio94_remove_from_cart'),
+            'emptyNonce' => wp_create_nonce('studio94_empty_cart'),
         ];
         wp_localize_script('studio94-main', 'studio94Cart', $cart_config);
     }
@@ -78,15 +77,10 @@ add_action('wp_enqueue_scripts', 'studio94_dequeue_wc_add_to_cart_script', 20);
 
 function studio94_ajax_remove_from_cart() {
     check_ajax_referer('studio94_remove_from_cart', 'nonce');
-
-    if (!function_exists('WC') || !WC()->cart) {
-        wp_send_json_error(['message' => 'Cart unavailable']);
-    }
+    if (!function_exists('WC') || !WC()->cart) wp_send_json_error(['message' => 'Cart unavailable']);
 
     $product_id = isset($_POST['product_id']) ? absint($_POST['product_id']) : 0;
-    if (!$product_id) {
-        wp_send_json_error(['message' => 'Missing product ID']);
-    }
+    if (!$product_id) wp_send_json_error(['message' => 'Missing product ID']);
 
     $removed = false;
     foreach (WC()->cart->get_cart() as $cart_item_key => $cart_item) {
@@ -98,12 +92,9 @@ function studio94_ajax_remove_from_cart() {
         }
     }
 
-    if (!$removed) {
-        wp_send_json_error(['message' => 'Item not found in cart']);
-    }
+    if (!$removed) wp_send_json_error(['message' => 'Item not found in cart']);
 
     WC()->cart->calculate_totals();
-
     wp_send_json_success([
         'fragments' => apply_filters('woocommerce_add_to_cart_fragments', []),
         'cart_hash' => WC()->cart->get_cart_hash(),
@@ -187,11 +178,9 @@ add_filter('auto_theme_update_send_email', '__return_false');
 add_filter('auto_core_update_send_email', '__return_false');
 
 function studio94_add_image_to_thankyou($item_name, $item, $is_visible) {
-    if (is_wc_endpoint_url('order-received') || is_wc_endpoint_url('view-order')) {
-        if ($product = $item->get_product()) {
-            $thumbnail = $product->get_image([100, 100], ['style' => 'border-radius: 8px; object-fit: cover;', 'class' => 's94-order-item-img']);
-            $item_name = $thumbnail . '<div class="s94-order-item-title">' . $item_name . '</div>';
-        }
+    if ((is_wc_endpoint_url('order-received') || is_wc_endpoint_url('view-order')) && $product = $item->get_product()) {
+        $thumbnail = $product->get_image([100, 100], ['style' => 'border-radius: 8px; object-fit: cover;', 'class' => 's94-order-item-img']);
+        $item_name = $thumbnail . '<div class="s94-order-item-title">' . $item_name . '</div>';
     }
     return $item_name;
 }
@@ -251,12 +240,7 @@ function studio94_random_pet_slug($data, $postarr) {
             $is_unique = false;
             while (!$is_unique) {
                 $random_slug = sprintf('%06d', mt_rand(100000, 999999));
-                $exists = get_posts([
-                    'name'        => $random_slug,
-                    'post_type'   => 'pet_profile',
-                    'post_status' => 'any',
-                    'numberposts' => 1
-                ]);
+                $exists = get_posts(['name' => $random_slug, 'post_type' => 'pet_profile', 'post_status' => 'any', 'numberposts' => 1]);
                 if (empty($exists)) {
                     $data['post_name'] = $random_slug;
                     $is_unique = true;
@@ -270,10 +254,8 @@ function studio94_random_pet_slug($data, $postarr) {
 add_action('save_post_pet_profile', 'studio94_auto_generate_public_pin', 10, 3);
 function studio94_auto_generate_public_pin($post_id, $post, $update) {
     if (wp_is_post_revision($post_id) || wp_is_post_autosave($post_id)) return;
-    $existing_pin = get_post_meta($post_id, 'public_pin', true);
-    if (empty($existing_pin)) {
-        $random_pin = sprintf('%06d', mt_rand(100000, 999999));
-        update_post_meta($post_id, 'public_pin', $random_pin);
+    if (empty(get_post_meta($post_id, 'public_pin', true))) {
+        update_post_meta($post_id, 'public_pin', sprintf('%06d', mt_rand(100000, 999999)));
     }
 }
 
@@ -304,7 +286,6 @@ function studio94_pet_qr_html($post) {
         <div id="qr-container" style="margin-bottom: 15px; border: 1px solid #eaeaea; padding: 10px; background: #fff; display: flex; justify-content: center;"></div>
         <button id="download-qr" class="button button-primary" style="width: 100%;">Download Vector (SVG)</button>
     </div>
-
     <script src="https://cdn.jsdelivr.net/npm/qrcode-svg@1.1.0/lib/qrcode.min.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -317,26 +298,19 @@ function studio94_pet_qr_html($post) {
                 background: "#ffffff",
                 ecl: "L"
             });
-
-            var svgData = qrcode.svg();
-            var parser = new DOMParser();
-            var doc = parser.parseFromString(svgData, "image/svg+xml");
-            var qrContent = doc.documentElement.innerHTML;
-
-            var combinedSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="296" height="366" viewBox="0 0 296 366" style="background:#ffffff;">' +
-                '<g transform="translate(20, 20)">' + qrContent + '</g>' +
-                '<text x="148" y="335" font-family="Arial, sans-serif" font-size="46" font-weight="bold" letter-spacing="4" text-anchor="middle" fill="#000000"><?php echo esc_js($public_pin); ?></text>' +
-                '</svg>';
-
+            var svgData = qrcode.svg(),
+                parser = new DOMParser(),
+                doc = parser.parseFromString(svgData, "image/svg+xml"),
+                qrContent = doc.documentElement.innerHTML;
+            var combinedSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="296" height="366" viewBox="0 0 296 366" style="background:#ffffff;"><g transform="translate(20, 20)">' + qrContent + '</g><text x="148" y="335" font-family="Arial, sans-serif" font-size="46" font-weight="bold" letter-spacing="4" text-anchor="middle" fill="#000000"><?php echo esc_js($public_pin); ?></text></svg>';
             document.getElementById('qr-container').innerHTML = combinedSvg;
-
             document.getElementById('download-qr').addEventListener('click', function(e) {
                 e.preventDefault();
                 var blob = new Blob([combinedSvg], {
-                    type: "image/svg+xml;charset=utf-8"
-                });
-                var url = URL.createObjectURL(blob);
-                var a = document.createElement("a");
+                        type: "image/svg+xml;charset=utf-8"
+                    }),
+                    url = URL.createObjectURL(blob),
+                    a = document.createElement("a");
                 a.href = url;
                 a.download = "<?php echo esc_js($post->post_name); ?>-tag-qr.svg";
                 document.body.appendChild(a);
@@ -368,38 +342,259 @@ function studio94_pet_table_column_data($column, $post_id) {
     }
 }
 
-// Automatically redirect short domain (s94.uk/123456) to full pet profile
 add_action('init', 'studio94_short_domain_redirect');
 function studio94_short_domain_redirect() {
-    // Check if the visitor is using the short domain
     if (strpos($_SERVER['HTTP_HOST'], 's94.uk') !== false) {
-        // Grab the exact path they requested (e.g., /328789)
-        $path = $_SERVER['REQUEST_URI'];
-
-        // Redirect them permanently to the proper pet profile URL
-        wp_redirect('https://studio94.uk/pet' . $path, 301);
+        wp_redirect('https://studio94.uk/pet' . $_SERVER['REQUEST_URI'], 301);
         exit;
     }
 }
 
-// Hide SKU completely if empty or N/A
 add_filter('wc_product_sku_enabled', 'studio94_hide_empty_sku');
 function studio94_hide_empty_sku($enabled) {
-    if (! is_admin() && is_product()) {
+    if (!is_admin() && is_product()) {
         global $product;
-        if (! $product || ! $product->get_sku() || $product->get_sku() === 'N/A') {
-            return false;
-        }
+        if (!$product || !$product->get_sku() || $product->get_sku() === 'N/A') return false;
     }
     return $enabled;
 }
-// Remove WooCommerce notices from the Shop, Archive, and Cart pages
+
 add_action('wp', 'studio94_remove_annoying_notices');
 function studio94_remove_annoying_notices() {
-    if (is_shop() || is_product_category() || is_product_tag()) {
-        remove_action('woocommerce_before_shop_loop', 'woocommerce_output_all_notices', 10);
+    if (is_shop() || is_product_category() || is_product_tag()) remove_action('woocommerce_before_shop_loop', 'woocommerce_output_all_notices', 10);
+    if (is_cart()) remove_action('woocommerce_before_cart', 'woocommerce_output_all_notices', 10);
+}
+
+function studio94_ajax_empty_cart() {
+    check_ajax_referer('studio94_empty_cart', 'nonce');
+    if (function_exists('WC') && WC()->cart) WC()->cart->empty_cart();
+    wp_send_json_success();
+}
+add_action('wp_ajax_studio94_empty_cart', 'studio94_ajax_empty_cart');
+add_action('wp_ajax_nopriv_studio94_empty_cart', 'studio94_ajax_empty_cart');
+
+add_filter('option_woocommerce_cart_redirect_after_add', function ($value) {
+    return (wp_doing_ajax() && isset($_SERVER['HTTP_REFERER']) && strpos($_SERVER['HTTP_REFERER'], wc_get_cart_url()) !== false) ? 'no' : $value;
+});
+
+add_action('wp_footer', 'studio94_admin_quick_edit_btn');
+function studio94_admin_quick_edit_btn() {
+    if (!is_singular()) return;
+    $post_id = get_the_ID();
+    if (!current_user_can('edit_post', $post_id)) return;
+    $raw_edit_link = admin_url('post.php?post=' . $post_id . '&action=edit');
+    if (!$raw_edit_link) return;
+?>
+    <style>
+        .s94-admin-edit-btn {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            background-color: var(--brand-indigo, #1d2a3b);
+            color: #ffffff !important;
+            padding: 10px 20px;
+            border-radius: var(--radius-pill, 50px);
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-decoration: none;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            z-index: 999999;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .s94-admin-edit-btn:hover {
+            transform: translateY(-3px);
+            background-color: var(--brand-pink, #df8ca3);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .s94-admin-edit-btn svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+    </style>
+    <a href="<?php echo esc_url($raw_edit_link); ?>" class="s94-admin-edit-btn" title="Edit this page (Ctrl+E)">
+        <svg viewBox="0 0 24 24">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg> Edit
+    </a>
+    <script>
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'e') {
+                e.preventDefault();
+                window.location.href = "<?php echo $raw_edit_link; ?>";
+            }
+        });
+    </script>
+<?php
+}
+
+function studio94_fix_offload_image_urls($url_or_html) {
+    if (empty($url_or_html) || ! is_string($url_or_html)) {
+        return $url_or_html;
     }
-    if (is_cart()) {
-        remove_action('woocommerce_before_cart', 'woocommerce_output_all_notices', 10);
+
+    $cleaned = preg_replace(
+        '/https?:\/\/media\.studio94\.uk\/(?:[^\s"\'<>]*?)(?:https?:\/\/[^\/]+)?\/?/i',
+        'https://media.studio94.uk/',
+        $url_or_html
+    );
+
+    $cleaned = preg_replace('/(?<=media\.studio94\.uk\/)(?:uploads\/)+/i', '', $cleaned);
+
+    $cleaned = preg_replace(
+        '/https?:\/\/media\.studio94\.uk\/(?!uploads\/)/i',
+        'https://media.studio94.uk/uploads/',
+        $cleaned
+    );
+
+    $cleaned = str_replace('uploads/./', 'uploads/', $cleaned);
+
+    return $cleaned;
+}
+
+add_filter('post_thumbnail_html', 'studio94_fix_offload_image_urls', 999);
+add_filter('woocommerce_single_product_image_thumbnail_html', 'studio94_fix_offload_image_urls', 999);
+add_filter('wp_get_attachment_url', 'studio94_fix_offload_image_urls', 999);
+
+add_filter('wp_get_attachment_image_src', function ($image) {
+    if (is_array($image) && isset($image[0])) {
+        $image[0] = studio94_fix_offload_image_urls($image[0]);
     }
+    return $image;
+}, 999);
+
+add_filter('wp_calculate_image_srcset', function ($sources) {
+    if (is_array($sources)) {
+        foreach ($sources as &$source) {
+            if (isset($source['url'])) {
+                $source['url'] = studio94_fix_offload_image_urls($source['url']);
+            }
+        }
+    }
+    return $sources;
+}, 999);
+
+add_action('wp_footer', 'studio94_force_wapf_immediate_pricing', 999);
+function studio94_force_wapf_immediate_pricing() {
+    if (!is_product()) return;
+?>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof jQuery === 'undefined') return;
+
+            function s94NuclearPriceUpdate() {
+                var $totalsWrap = jQuery('.wapf-product-totals');
+                var $priceWrap = jQuery('.s94-force-price .price');
+                if (!$priceWrap.length) $priceWrap = jQuery('.price-wrap .price');
+
+                var originalRange = jQuery('.s94-force-price').attr('data-custom-range') || jQuery('.price-wrap').attr('data-custom-range') || '';
+
+                if ($totalsWrap.length) {
+                    $totalsWrap.attr('data-product-type', 'simple');
+                }
+
+                var basePrice = parseFloat($totalsWrap.attr('data-product-price')) || 0;
+                if (basePrice === 0) {
+                    var match = originalRange.match(/[\d\.]+/);
+                    if (match) basePrice = parseFloat(match[0]);
+                }
+
+                var optionsTotal = 0;
+                var hasWapfSelection = false;
+
+                jQuery('.wapf-input').each(function() {
+                    var $input = jQuery(this);
+                    if ($input.is('select') && $input.val() !== '') {
+                        hasWapfSelection = true;
+                        var $opt = $input.find('option:selected');
+                        optionsTotal += parseFloat($opt.attr('data-wapf-price')) || 0;
+                    } else if ($input.is('input[type="checkbox"], input[type="radio"]') && $input.is(':checked')) {
+                        hasWapfSelection = true;
+                        optionsTotal += parseFloat($input.attr('data-wapf-price')) || 0;
+                    }
+                });
+
+                var isVariationSelected = jQuery('input[name="variation_id"]').val() > 0;
+
+                if (hasWapfSelection || isVariationSelected) {
+                    var grandTotal = basePrice + optionsTotal;
+                    var formattedPrice = '<span class="woocommerce-Price-amount amount"><bdi>£' + grandTotal.toFixed(2) + '</bdi></span>';
+
+                    if ($totalsWrap.length) {
+                        $totalsWrap.find('.wapf-grand-total').html(formattedPrice);
+                        $totalsWrap.css({
+                            'display': 'block',
+                            'visibility': 'visible',
+                            'opacity': '1'
+                        }).removeClass('wapf-hide');
+                    }
+                    $priceWrap.html(formattedPrice);
+                    $priceWrap.attr('data-nuclear-locked', 'true');
+                } else {
+                    if (originalRange) {
+                        $priceWrap.html('<span class="woocommerce-Price-amount amount"><bdi>' + originalRange + '</bdi></span>');
+                    }
+                    if ($totalsWrap.length) {
+                        $totalsWrap.css({
+                            'display': 'none',
+                            'visibility': 'hidden',
+                            'opacity': '0'
+                        }).addClass('wapf-hide');
+                    }
+                    $priceWrap.removeAttr('data-nuclear-locked');
+                }
+            }
+
+            jQuery(document).on('wapf/totals_calculated', function(e) {
+                s94NuclearPriceUpdate();
+            });
+
+            jQuery(document).on('found_variation show_variation reset_data', 'form.variations_form', function() {
+                setTimeout(s94NuclearPriceUpdate, 10);
+                setTimeout(s94NuclearPriceUpdate, 100);
+            });
+
+            jQuery(document).on('change input', '.wapf-input, select[name^="wapf["]', function() {
+                setTimeout(s94NuclearPriceUpdate, 10);
+                setTimeout(s94NuclearPriceUpdate, 100);
+            });
+
+            jQuery(document).on('click', '.custom-dropdown-list li', function() {
+                setTimeout(s94NuclearPriceUpdate, 10);
+                setTimeout(s94NuclearPriceUpdate, 100);
+            });
+
+            window.updateTopPrice = s94NuclearPriceUpdate;
+
+            var target = document.querySelector('.s94-force-price .price') || document.querySelector('.price-wrap .price');
+            if (target) {
+                var observer = new MutationObserver(function(mutations) {
+                    if (target.getAttribute('data-nuclear-locked') === 'true') {
+                        if (target.innerHTML.trim() === '') {
+                            s94NuclearPriceUpdate();
+                        }
+                    }
+                });
+                observer.observe(target, {
+                    childList: true,
+                    characterData: true,
+                    subtree: true
+                });
+            }
+
+            setTimeout(s94NuclearPriceUpdate, 250);
+        });
+    </script>
+<?php
 }

@@ -54,21 +54,69 @@ while (have_posts()) : the_post();
 						</div>
 					<?php endif; ?>
 
-					<?php $custom_range = get_post_meta($product->get_id(), '_s94_custom_price_range', true); ?>
-					<div class="price-wrap" data-custom-range="<?php echo esc_attr($custom_range); ?>">
-						<?php
-						if (!empty($custom_range)) {
-							echo '<p class="price"><span class="woocommerce-Price-amount amount"><bdi>' . esc_html($custom_range) . '</bdi></span></p>';
+					<?php
+					$custom_range = get_post_meta($product->get_id(), '_s94_custom_price_range', true);
+
+					// NUCLEAR PRICE FETCHING
+					$display_price_html = '';
+					$data_custom_range_attr = $custom_range;
+
+					if (!empty($custom_range)) {
+						// 1. Pet Tags (Custom Range) - Untouched logic
+						$display_price_html = '<span class="woocommerce-Price-amount amount"><bdi>' . esc_html($custom_range) . '</bdi></span>';
+					} else {
+						// 2. Intertwined Hands & Standard Products - Raw database extraction bypassing WAPF filters
+						if ($product->is_type('variable')) {
+							$prices = $product->get_variation_prices(true);
+							$min_price = current($prices['price']);
+							$max_price = end($prices['price']);
+
+							if ($min_price === $max_price) {
+								$display_price_html = wc_price($min_price);
+							} else {
+								$display_price_html = wc_format_price_range($min_price, $max_price);
+							}
 						} else {
-							woocommerce_template_single_price();
+							$display_price_html = wc_price(wc_get_price_to_display($product));
 						}
-						?>
+
+						// Create pure text string for main.js to consume safely without double-wrapping HTML
+						$data_custom_range_attr = html_entity_decode(wp_strip_all_tags($display_price_html));
+					}
+					?>
+
+					<div class="price-wrap s94-force-price" data-custom-range="<?php echo esc_attr($data_custom_range_attr); ?>" style="display:block !important; opacity:1 !important; visibility:visible !important;">
+						<p class="price" style="display:block !important; opacity:1 !important; visibility:visible !important;"><?php echo $display_price_html; ?></p>
 					</div>
+
+					<!-- Nuclear JS Fallback: actively guards the price HTML and restores it if WAPF erases it -->
+					<script>
+						document.addEventListener("DOMContentLoaded", function() {
+							var priceWrap = document.querySelector('.s94-force-price .price');
+							var backupHTML = <?php echo wp_json_encode($display_price_html); ?>;
+
+							if (priceWrap) {
+								if (priceWrap.innerHTML.trim() === '') {
+									priceWrap.innerHTML = backupHTML;
+								}
+								var observer = new MutationObserver(function() {
+									if (priceWrap.innerHTML.trim() === '') {
+										priceWrap.innerHTML = backupHTML;
+									}
+								});
+								observer.observe(priceWrap, {
+									childList: true,
+									characterData: true,
+									subtree: true
+								});
+							}
+						});
+					</script>
+
 					<div class="short-desc"><?php woocommerce_template_single_excerpt(); ?></div>
 
 					<div class="cart-actions-wrapper">
 						<?php
-						// Dynamically check cart state on page load
 						$is_in_cart = false;
 						if (function_exists('WC') && WC()->cart) {
 							foreach (WC()->cart->get_cart() as $cart_item) {
@@ -80,12 +128,10 @@ while (have_posts()) : the_post();
 							}
 						}
 
-						// Force text change
 						add_filter('woocommerce_product_single_add_to_cart_text', function () use ($is_in_cart) {
 							return $is_in_cart ? __('Added to cart', 'woocommerce') : __('Add to cart', 'woocommerce');
 						}, 99);
 
-						// Inject the necessary class directly onto the button immediately after it renders
 						if ($is_in_cart) {
 							add_action('woocommerce_after_add_to_cart_button', function () {
 								echo '<script>document.addEventListener("DOMContentLoaded", function() { var b = document.querySelector(".single_add_to_cart_button"); if(b) b.classList.add("added"); });</script>';
@@ -154,7 +200,6 @@ while (have_posts()) : the_post();
 	</div>
 
 <?php
-	get_template_part('template-parts/modal-quick-view');
 	get_template_part('template-parts/modal-lightbox');
 endwhile;
 do_action('woocommerce_after_main_content');

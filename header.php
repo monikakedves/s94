@@ -17,12 +17,10 @@
         <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/logo_v1.svg'); ?>" alt="Loading Studio 94">
     </div>
     <script>
-        // window.addEventListener('load') guarantees all images, iframes, and fonts are fully downloaded
         window.addEventListener('load', function() {
             const preloader = document.getElementById('s94-preloader');
             if (preloader) {
                 preloader.classList.add('s94-loaded');
-                // Completely remove the element from the DOM after the fade transition finishes
                 setTimeout(() => preloader.remove(), 400);
             }
         });

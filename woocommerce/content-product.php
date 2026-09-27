@@ -10,14 +10,13 @@ if (empty($product) || ! $product->is_visible()) {
 $product_id = $product->get_id();
 $permalink  = $product->get_permalink();
 $title      = $product->get_name();
+
+// Price Fetcher with Fallback for Fixed-Price Variable Products
 $price_html = $product->get_price_html();
-$thumb_url  = get_the_post_thumbnail_url($product_id, 'woocommerce_thumbnail');
-$full_url   = get_the_post_thumbnail_url($product_id, 'large');
-$short_desc = apply_filters('woocommerce_short_description', $product->get_short_description());
+if (empty($price_html)) {
+    $price_html = wc_price(wc_get_price_to_display($product));
+}
 $custom_range = get_post_meta($product_id, '_s94_custom_price_range', true);
-ob_start();
-woocommerce_template_single_add_to_cart();
-$cart_form = ob_get_clean();
 
 $is_in_cart = false;
 if (function_exists('WC') && WC()->cart) {
@@ -29,13 +28,25 @@ if (function_exists('WC') && WC()->cart) {
         }
     }
 }
+
+// Fetch main image and gallery images for the slider
+$main_image = $product->get_image('woocommerce_thumbnail', ['loading' => 'eager']);
+$gallery_ids = $product->get_gallery_image_ids();
+$images = array($main_image);
+if (!empty($gallery_ids)) {
+    foreach (array_slice($gallery_ids, 0, 4) as $id) { // Limit to 5 images total
+        $images[] = wp_get_attachment_image($id, 'woocommerce_thumbnail', false, ['loading' => 'eager']);
+    }
+}
 ?>
 <li <?php wc_product_class('', $product); ?>>
-    <div class="product-img-wrap">
-        <?php if ($product->is_on_sale() && $product->is_in_stock()) : ?>
-            <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/sale.svg'); ?>" class="onsale-svg" alt="Sale!">
-        <?php endif; ?>
 
+    <!-- Sale ribbon moved outside the image wrap to hug the card corner -->
+    <?php if ($product->is_on_sale() && $product->is_in_stock()) : ?>
+        <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/sale.svg'); ?>" class="onsale-svg" alt="Sale!">
+    <?php endif; ?>
+
+    <div class="product-img-wrap s94-slider-wrap">
         <?php if (! $product->is_in_stock()) : ?>
             <span class="out-of-stock-pill">OUT OF STOCK</span>
         <?php endif; ?>
@@ -44,12 +55,26 @@ if (function_exists('WC') && WC()->cart) {
             <span class="best-seller-badge">Best Seller</span>
         <?php endif; ?>
 
-        <a href="<?php echo esc_url($permalink); ?>" style="display:block; width:100%; height:100%;">
-            <?php echo $product->get_image('woocommerce_thumbnail'); ?>
+        <a href="<?php echo esc_url($permalink); ?>" class="s94-slider-link">
+            <div class="s94-slider-track">
+                <?php foreach ($images as $img_html): ?>
+                    <div class="s94-slide"><?php echo $img_html; ?></div>
+                <?php endforeach; ?>
+            </div>
         </a>
-        <div class="quick-view-overlay">
-            <button class="quick-view-btn" data-id="<?php echo esc_attr($product_id); ?>">Quick View</button>
-        </div>
+
+        <?php if (count($images) > 1): ?>
+            <button class="s94-slider-arrow s94-prev" aria-label="Previous image">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 18l-6-6 6-6" />
+                </svg>
+            </button>
+            <button class="s94-slider-arrow s94-next" aria-label="Next image">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 18l6-6-6-6" />
+                </svg>
+            </button>
+        <?php endif; ?>
     </div>
 
     <div class="product-info-wrap">
@@ -92,15 +117,4 @@ if (function_exists('WC') && WC()->cart) {
             <?php endif; ?>
         </div>
     </div>
-
-    <!-- Hidden Quick View Data -->
-    <div class="qv-data" style="display:none;" data-title="<?php echo esc_attr($title); ?>" data-img="<?php echo esc_url($full_url); ?>" data-url="<?php echo esc_url($permalink); ?>">
-        <?php echo wp_kses_post($short_desc); ?>
-    </div>
-    <div class="qv-rating-data" style="display:none;">
-        <?php echo $product->get_rating_count() > 0 ? wc_get_rating_html($product->get_average_rating()) : ''; ?>
-    </div>
-    <div class="qv-price-data" style="display:none;"><?php echo !empty($custom_range) ? '<span class="woocommerce-Price-amount amount"><bdi>' . esc_html($custom_range) . '</bdi></span>' : $price_html; ?></div>
-    <div class="qv-custom-range-data" style="display:none;"><?php echo esc_attr($custom_range); ?></div>
-    <div class="qv-cart-data" style="display:none;"><?php echo htmlspecialchars($cart_form); ?></div>
 </li>
